@@ -1,5 +1,6 @@
 import atexit
 from time import clock
+from functools import reduce
 
 def secondsToStr(t):
     return "%d:%02d:%02d.%03d" % \
@@ -8,11 +9,11 @@ def secondsToStr(t):
 
 line = "="*40
 def log(s, elapsed=None):
-    print line
-    print secondsToStr(clock()), '-', s
+    print(line)
+    print(secondsToStr(clock()), '-', s)
     if elapsed:
-        print "Elapsed time:", elapsed
-    print line
+        print("Elapsed time:", elapsed)
+    print(line)
     print
 
 def endlog():
