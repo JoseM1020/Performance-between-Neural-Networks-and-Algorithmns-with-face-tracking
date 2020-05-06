@@ -16,63 +16,55 @@ ap.add_argument("-c", "--confidence", type=float, default=0.5,
 	help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 
-#$ pip install imutils
 
-# load our serialized model from disk
+# load the model
 print("[INFO] loading model...")
 net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
-# initialize the video stream and allow the camera sensor to warm up
+# create the video stream and allow the camera to start
 print("[INFO] starting video stream...")
 vs = VideoStream(usePiCamera=True).start()
 time.sleep(2.0)
 
-# loop over the frames from the video stream
 while True:
-	# grab the frame from the threaded video stream and resize it
-	# to have a maximum width of 400 pixels
+	# grab the current frame of video and resize it to 400px wide
 	frame = vs.read()
 	frame = imutils.resize(frame, width=400)
 
-	# grab the frame dimensions and convert it to a blob
+	# convert to blob as in the FaceDetect for images
 	(h, w) = frame.shape[:2]
 	blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
 								 (300, 300), (104.0, 177.0, 123.0))
 
-	# pass the blob through the network and obtain the detections and
-	# predictions
+	# input the blog into the neural net and get the resulting detections.
 	net.setInput(blob)
 	detections = net.forward()
 
-	# loop over the detections
+	# go through each detection
 	for i in range(0, detections.shape[2]):
-		# extract the confidence (i.e., probability) associated with the
-		# prediction
+		# find the predictions confidence value
 		confidence = detections[0, 0, i, 2]
-		# filter out weak detections by ensuring the `confidence` is
-		# greater than the minimum confidence
+		# Only show detections above the given threshold
 		if confidence < args["confidence"]:
 			continue
-		# compute the (x, y)-coordinates of the bounding box for the
-		# object
+		# compute the coordinates of the bounding box for the detection
 		box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
 		(startX, startY, endX, endY) = box.astype("int")
 
-		# draw the bounding box of the face along with the associated
-		# probability
+		# draw the bounding box and display the confidence
 		text = "{:.2f}%".format(confidence * 100)
 		y = startY - 10 if startY - 10 > 10 else startY + 10
 		cv2.rectangle(frame, (startX, startY), (endX, endY),
 					  (0, 0, 255), 2)
 		cv2.putText(frame, text, (startX, y),
-					cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+					cv2.FONT_HERSHEY_DUPLEX, 0.45, (0, 0, 255), 2)
 
-	# show the output frame
+	# show the detected frame
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF
 
 	# if the `q` key was pressed, break from the loop
 	if key == ord("q"):
 		break
-# do a bit of cleanup
+# shutdown code
 cv2.destroyAllWindows()
 vs.stop()
